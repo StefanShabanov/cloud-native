@@ -14,7 +14,6 @@ override.tf.json
 /jenkins/.terraform
 /jenkins/terraform.tfstate
 /jenkins/terraform.tfstate.backup
-/jenkins/
 /jenkins/.terraform.lock.hcl
 
 
