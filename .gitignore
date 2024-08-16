@@ -22,3 +22,4 @@ override.tf.json
 /vpn_gateway/terraform.tfstate
 /vpn_gateway/terraform.tfstate.backup
 /vpn_gateway/secrets.tf
+/vpn_gateway/.terraform.lock.hcl
