@@ -15,7 +15,7 @@ override.tf.json
 /jenkins/terraform.tfstate
 /jenkins/terraform.tfstate.backup
 /jenkins/
-
+/jenkins/.terraform.lock.hcl
 
 
 /vpn_gateway/.terraform
