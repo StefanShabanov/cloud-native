@@ -59,19 +59,6 @@ resource "openstack_compute_instance_v2" "jenkins_instance" {
     sudo bash -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
     # Update the package list and upgrade the system
     sudo apt-get update -y
-    sudo apt-get upgrade -y
-
-    # Add Jenkins repository to your system
-    wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo apt-key add -
-    sudo sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
-
-    # Update the package list again to include Jenkins
-    sudo apt-get update -y
-
-    # Install Java OpenJDK 11 and Jenkins
-    sudo apt-get install openjdk-11-jdk -y
-    sudo apt-get install jenkins git -y
-
   EOF
 
 }
@@ -99,3 +86,17 @@ resource "null_resource" "add_key_to_user" {
     ]
   }
 }
+
+resource "null_resource" "configure_ansible_inventory" {
+  provisioner "local-exec" {
+    command = <<EOT
+      ssh-add ssh_key_${replace(var.instance_hostname, ".", "_")}
+      echo "[jenkins]" > ${path.module}/../../ansible/inventories/inventory.ini
+      echo "jenkins-server ansible_host=${openstack_networking_floatingip_v2.microservices_floating_ip.address} ansible_user=ubuntu ansible_ssh_private_key_file=${path.module}/ssh_key_${replace(var.instance_hostname, ".", "_")}" >> ${path.module}/../../ansible/inventories/inventory.ini
+      ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ${path.module}/../../ansible/inventories/inventory.ini ${path.module}/../../ansible/playbook.yml
+    EOT
+  }
+
+  depends_on = [null_resource.add_key_to_user]
+}
+

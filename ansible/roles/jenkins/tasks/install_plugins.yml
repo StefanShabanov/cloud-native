@@ -1,0 +1,7 @@
+# roles/jenkins/tasks/install_plugins.yml
+
+- name: Jenkins CLI
+  get_url:
+    url: http://localhost:8080/jnlpJars/jenkins-cli.jar
+    dest: /usr/share/jenkins/jenkins-cli.jar
+    mode: '0755'

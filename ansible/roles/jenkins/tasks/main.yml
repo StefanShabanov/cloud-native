@@ -1,0 +1,59 @@
+---
+- name: Install Java
+  apt:
+    name: openjdk-11-jdk
+    state: present
+
+- name: Manually add Jenkins repository GPG key
+  shell: |
+    curl -fsSL https://pkg.jenkins.io/debian/jenkins.io-2023.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+
+- name: Add Jenkins APT repository
+  apt_repository:
+    repo: deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] http://pkg.jenkins.io/debian-stable binary/
+    state: present
+
+- name: Install Jenkins
+  apt:
+    name: jenkins
+    state: present
+    update_cache: yes
+  retries: 5
+  delay: 30
+  register: jenkins_install
+  until: jenkins_install is succeeded
+
+- name: Start and enable Jenkins service
+  service:
+    name: jenkins
+    state: started
+    enabled: yes
+
+- name: Wait for Jenkins to start up
+  wait_for:
+    port: 8080
+    state: started
+    timeout: 60
+
+- name: Retrieve initial admin password
+  slurp:
+    src: /var/lib/jenkins/secrets/initialAdminPassword
+  register: initial_admin_password
+
+- set_fact:
+    jenkins_initial_password: "{{ initial_admin_password.content | b64decode }}"
+
+## backup config
+
+- name: Copy backup script
+  copy:
+    src: backup.sh
+    dest: /usr/local/bin/backup_jenkins.sh
+    mode: '0755'
+
+- name: Set up cron job for Jenkins backup
+  cron:
+    name: "Automated Jenkins backup"
+    minute: "0"
+    hour: "2"
+    job: "/usr/local/bin/backup_jenkins.sh"
